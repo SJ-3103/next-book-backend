@@ -182,22 +182,21 @@ def get_cookie(cookie):
         print("Database connection is closed")
 
 
-# def delete_all_users_and_cookies():
-#     connection = None
-#     try:
-#         sql = """DELETE FROM user_table *;"""
-#         connection = connect_fun()
-#         cursor = connection.cursor()
-#         cursor.execute(sql)
-#
-#         cursor.close()
-#         connection.commit()
-#         print("Done")
-#     except (Exception, DatabaseError) as e:
-#         print(e)
-#     finally:
-#         connection.close()
-#         print("Database connection is closed")
-#
-#
-# delete_all_users_and_cookies()
+def delete_cookie(cookie):
+    connection = None
+    try:
+        sql = """DELETE FROM cookie_table * where cookie_value = (%s);"""
+        connection = connect_fun()
+        cursor = connection.cursor()
+        cursor.execute(sql, (cookie,))
+
+        cursor.close()
+        connection.commit()
+        print("Done")
+        return {"msg": "Ok"}
+    except (Exception, DatabaseError) as e:
+        print(e)
+        return {"error": e}
+    finally:
+        connection.close()
+        print("Database connection is closed")
