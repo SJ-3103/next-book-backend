@@ -10,33 +10,20 @@ warnings.filterwarnings("ignore")
 df = pd.read_csv('./newbooks.csv', error_bad_lines=False)
 
 
-def most_rated_books():
+def send_books(value):
     my_dict = {}
     x = 0
-    most_rated = df.sort_values('ratings_count', ascending=False).head(10)
-    my_array = most_rated.index
-    for id in my_array:
-        my_dict[x] = df.iloc[id].to_json()
-        x = x + 1
-    return my_dict
+    value = value.lower()
 
+    if value == "mostrated":
+        my_array = df.sort_values('ratings_count', ascending=False).head(10).index
+    elif value == "newbooks":
+        my_array = df.sort_values('publication_date', ascending=False).head(10).index
+    elif value == "bestselling":
+        my_array = df.sort_values('text_reviews_count', ascending=False).head(10).index
+    else:
+        return {"msg": "type error:not found"}
 
-def new_books():
-    my_dict = {}
-    x = 0
-    new_book = df.sort_values('publication_date', ascending=False).head(10)
-    my_array = new_book.index
-    for id in my_array:
-        my_dict[x] = df.iloc[id].to_json()
-        x = x + 1
-    return my_dict
-
-
-def best_selling():
-    my_dict = {}
-    x = 0
-    best_selling = df.sort_values('text_reviews_count', ascending=False).head(10)
-    my_array = best_selling.index
     for id in my_array:
         my_dict[x] = df.iloc[id].to_json()
         x = x + 1
