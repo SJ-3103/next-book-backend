@@ -80,3 +80,9 @@ def print_similar_books(query=None):
             mydict[x] = df.iloc[id].to_json()
             x = x + 1
     return mydict
+
+
+def get_details(book_id):
+    book_id = int(book_id)
+    my_dict = df.iloc[df[df["bookID"] == book_id].index.tolist()[0]].to_json()
+    return my_dict

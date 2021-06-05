@@ -1,6 +1,6 @@
 from flask import Flask, request, make_response, jsonify
 from markupsafe import escape
-from data import send_books, print_similar_books
+from data import send_books, print_similar_books, get_details
 
 from flask_cors import CORS
 
@@ -21,10 +21,20 @@ def handle_api(book_type):
         return {"msg": {e}}
 
 
+@app.route('/api/detail', methods=['GET'])
+def handle_detail():
+    book_id = request.args.get('book_id')
+    try:
+        res = get_details(book_id)
+        return res
+    except Exception as e:
+        print(e)
+        return {"msg": "ERROR"}
+
+
 @app.route('/api/nextbook/<book_name>', methods=['GET'])
 def handle_send(book_name):
     if request.method == 'GET':
-        print(escape(book_name))
         try:
             data = print_similar_books(escape(book_name))
             return data
