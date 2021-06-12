@@ -71,18 +71,35 @@ def get_index_from_name(name):
     return df[df["title"] == name].index.tolist()[0]
 
 
-def print_similar_books(query=None):
-    mydict = {}
-    x = 0
-    if query:
-        found_id = get_index_from_name(query)
-        for id in indicesKNN[found_id][1:]:
-            mydict[x] = df.iloc[id].to_json()
+def print_similar_books(query):
+    try:
+        my_dict = {}
+        x = 0
+        found_id = df[df["title"] == query].bookID.tolist()[0]
+        found_index = get_index_from_name(query)
+        for id in indicesKNN[found_index][1:]:
+            my_dict[x] = df.iloc[id].to_json()
             x = x + 1
-    return mydict
+        return {"msg": "ok", "data": my_dict, "search_book_id": found_id, "search_book_name": query}
+    except Exception as e:
+        print(e)
+        return {"msg": "Error"}
 
 
 def get_details(book_id):
     book_id = int(book_id)
     my_dict = df.iloc[df[df["bookID"] == book_id].index.tolist()[0]].to_json()
+    return my_dict
+
+
+all_books_names = list(df.title.values)
+
+
+def get_names_and_id_from_partial_name(partial):
+    my_dict = {}
+    x = 0
+    for name in all_books_names:
+        if partial in name:
+            my_dict[x] = {"name": name, "index": all_books_names.index(name)}
+            x = x + 1
     return my_dict
