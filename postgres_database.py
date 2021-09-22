@@ -2,13 +2,17 @@ from psycopg2 import connect, DatabaseError
 import hashlib
 from flask import jsonify
 
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+# load_dotenv(dotenv_path=Path("./.env"))
 
 def connect_fun():
     print("Connecting to the database server......")
     connection = connect(
-        dbname="next-book-database",
-        user="postgres",
-        password="jain1234"
+        dbname=os.getenv("DBNAME"),
+        user=os.getenv("USER"),
+        password=os.getenv("PASSWORD")
     )
     return connection
 

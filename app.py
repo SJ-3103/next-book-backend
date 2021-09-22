@@ -1,12 +1,28 @@
-from flask import Flask, request, make_response, jsonify
-from data import send_books, print_similar_books, get_details,get_names_and_id_from_partial_name
+from flask import Flask, request, make_response, jsonify, send_from_directory
+
+from data import send_books, print_similar_books, get_details, get_names_and_id_from_partial_name
 
 from flask_cors import CORS
 
 from postgres_database import insert_user, get_user, get_cookie, delete_cookie
 
-app = Flask(__name__)
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+
+load_dotenv(dotenv_path=Path('.', ".env"))
+
+app = Flask(__name__, static_folder='build/')
 CORS(app, supports_credentials=True)
+
+
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 
 @app.route('/api/<book_type>', methods=['GET'])
@@ -139,6 +155,7 @@ def handle_logout():
 
 
 if __name__ == "main":
-    PORT = 5000
+    PORT = os.getenv("PORT")
     print('Server in running on port', PORT)
     app.run()
+    
