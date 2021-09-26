@@ -5,7 +5,8 @@ from flask import jsonify
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-# load_dotenv(dotenv_path=Path("./.env"))
+
+load_dotenv(dotenv_path=Path('.',"env"))
 
 def connect_fun():
     print("Connecting to the database server......")
