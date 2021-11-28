@@ -5,7 +5,7 @@ from psycopg2 import connect
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-load_dotenv(dotenv_path=Path('./', "env"))
+load_dotenv(dotenv_path=Path('./env', "env"))
 app = Flask(__name__, static_folder='build/')
 
 
