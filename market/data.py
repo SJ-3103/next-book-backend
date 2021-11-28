@@ -2,12 +2,11 @@ import numpy as np
 import pandas as pd
 from sklearn import neighbors
 from sklearn.preprocessing import MinMaxScaler
-
 import warnings
 
 warnings.filterwarnings("ignore")
 
-df = pd.read_csv('./newbooks.csv', error_bad_lines=False)
+df = pd.read_csv('market/data/newbooks.csv', error_bad_lines=False)
 
 
 def send_books(value):
@@ -16,11 +15,14 @@ def send_books(value):
     value = value.lower()
 
     if value == "mostrated":
-        my_array = df.sort_values('ratings_count', ascending=False).head(10).index
+        my_array = df.sort_values(
+            'ratings_count', ascending=False).head(10).index
     elif value == "newbooks":
-        my_array = df.sort_values('publication_date', ascending=False).head(10).index
+        my_array = df.sort_values(
+            'publication_date', ascending=False).head(10).index
     elif value == "bestselling":
-        my_array = df.sort_values('text_reviews_count', ascending=False).head(10).index
+        my_array = df.sort_values(
+            'text_reviews_count', ascending=False).head(10).index
     else:
         return {"msg": "type error:not found"}
 
