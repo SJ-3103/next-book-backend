@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 load_dotenv(dotenv_path=Path("env\.env"))
 app = Flask(__name__)
-# app = Flask(__name__, static_folder='build/')
+app = Flask(__name__, static_folder='build/')
 
 
 try:
