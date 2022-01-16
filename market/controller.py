@@ -1,6 +1,8 @@
 from flask import request, make_response
+from numpy import e
+from sqlalchemy import true
 from market.data import send_books, get_details, get_names_and_id_from_partial_name, print_similar_books
-from market.crud import get_cookie,get_user,delete_cookie,insert_user
+from market.crud import check_user,login_user,register_user
 
 def home(book_type):
     try:
@@ -35,36 +37,35 @@ def details():
         print(e)
         return {"msg": "ERROR"}
 
+###########################################################################################################
 
 def login():
     if request.method == 'GET':
         try:
             jwt_cookie = request.cookies.get('jwt')
-            if jwt_cookie:  # cookie found
-                user = get_cookie(jwt_cookie)
-                response = None
-                if user.get("email_id"):
-                    response = make_response({
-                        "cookie": True,
-                        "email_id": user.get("email_id")
-                    }, 200)
 
-                elif user.get("msg") == str("cookie not found"):
-                    response = make_response({
-                        "cookie": False,
-                    })
-                    response.delete_cookie('jwt')
+            if jwt_cookie:  # cookie found
+                user = check_user(jwt_cookie)
+
+                response = make_response({
+                    "cookie": True,
+                    "email_id": user.get("email_id")
+                }, 200)
+
+                return response
+            
             else:
                 response = make_response({"msg": "No cookie"})
 
             return response
         except Exception as e:
-            return make_response({"msg": e})
+            return make_response({"msg": e.get("msg")})
 
     if request.method == 'POST':
         try:
             data = request.json
-            res = get_user(data)
+
+            res = login_user(data)
 
             if res.get("msg") == str("user not found"):
                 response = make_response({
@@ -73,35 +74,44 @@ def login():
 
             elif res.get("msg") == str("user found"):
                 response = make_response({
-                    "email_id": res.get("email_id")
+                    "cookie":True
                 }, 200)
-
-                response.set_cookie('jwt', value=res.get('cookie'), httponly=False,
-                                    max_age=10 * 24 * 60 * 60, secure=True)
-
+                
+                response.set_cookie('jwt', value=res.get("cookie"),max_age=24*60*60)
+            
+            elif res.get("msg") == str("password is wrong"):
+                response = make_response({
+                    "msg":res.get("msg"),
+                    "cookie":False
+                })
+                
             return response
         except Exception as e:
+            print(e)
             return make_response({"msg": e})
 
 
 def register():
     try:
         data = request.json
-        res = insert_user(data)
+        res = register_user(data)
 
         if res.get("msg") == str("ok"):
+
             response = make_response({
                 "email_id": data['email_id'],
-                "redirect": True
+                "cookie": True
             })
-            response.set_cookie('jwt', value=res.get("cookie"), max_age=10 * 24 * 60 * 60,
-                                httponly=False, secure=True)
+            
+            response.set_cookie('jwt', value=res.get("cookie"),max_age=24*60*60)
+        
         elif res.get("msg") == str("user already present"):
             response = make_response({
                 "msg": res.get("msg")
             })
+        
         else:
-            response = None
+            response = res
 
         return response
 
@@ -111,22 +121,13 @@ def register():
 
 def logout():
     jwt_cookie = request.cookies.get("jwt")
-
+    # print(jwt_cookie)
     try:
-        res = delete_cookie(jwt_cookie)
-
-        if res.get("msg") == str("Ok"):
-            response = make_response({
-                "msg": "logout success"
-            }, 200)
-
-            response.delete_cookie('jwt')
-
-        elif res.get("msg") == str("error"):
-            response = {"msg": "Error"}
-
+        response = make_response({
+            "cookie": False
+        })
+        response.set_cookie('jwt', value='',expires=0)
         return response
+
     except Exception as e:
-        return make_response({'msg': e})
-
-
+        return make_response({"msg": e})

@@ -1,32 +1,53 @@
 from market import cursor
 from market import connection
+import jwt
+import datetime
 
+import os
+from dotenv import load_dotenv
+from pathlib import Path
+load_dotenv(dotenv_path=Path("env\.env"))
 
-def get_cookie(data):
-    sql = """SELECT cookie,email_id FROM Cookies WHERE cookie=(%s);"""
+import bcrypt
+
+def check_user(data):
+
     try:
-        cursor.execute(sql,(data,))
-        
-        cookie_value = cursor.fetchone()
+        payload = jwt.decode(
+            data,
+            os.getenv("SECRET_KEY"),
+            algorithms=["HS256"]
+        )
+        email_id = payload['email']
 
-        if cookie_value is None:
-            response = {
-                "msg": "cookie not found"
-            }
-        else:
-            response = {
-                "email_id": cookie_value[1]
-            }
-        return response
-    except Exception as e:
-        print(e)
+        response = {
+            "email_id": email_id
+        }
+    except jwt.ExpiredSignatureError:
+        response = {
+            "msg":'Signature expired. Please log in again.'
+        }
+    except jwt.InvalidTokenError:
+        response = {
+            "msg":'Invalid token. Please log in again.'
+        }
+    
+    return response
 
 
-def insert_user(data):  # for register
+def register_user(data):  # for register
+
+    if data is None:
+        return "Please Enter Data."
+
     first_name = data["first_name"]
     last_name = data["last_name"]
     email_id = data["email_id"]
-    password = data["password"].encode()
+    password = data["password"]
+
+    # print(bcrypt.gensalt().encode())
+    hashed_pwd = bcrypt.hashpw(password.encode(),bcrypt.gensalt()).decode()
+    # print(hashed_pwd)
     
     # check if user is already present or not
     sql = """SELECT email_id FROM Users WHERE email_id=(%s);"""
@@ -39,15 +60,17 @@ def insert_user(data):  # for register
         if user is None:
             # insert user
             sql = """INSERT INTO Users(first_name,last_name,email_id,password) VALUES(%s,%s,%s,%s);"""
-            cursor.execute(sql,(first_name,last_name,email_id,password,))
-            
-            cookie = email_id.encode()
-
-            # insert cookie
-            sql = """INSERT INTO Cookies(email_id,cookie) VALUES(%s,%s);"""
-            cursor.execute(sql,(email_id,cookie,))
-
+            cursor.execute(sql,(first_name,last_name,email_id,hashed_pwd,))
             connection.commit()
+
+            payload = {
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, seconds=0),
+                'email': email_id
+            }
+            cookie =  jwt.encode(
+                payload,
+                os.getenv("SECRET_KEY")
+            )
 
             response = {
                 "msg": "ok",
@@ -58,65 +81,54 @@ def insert_user(data):  # for register
             response = {
                 "msg": "user already present"
             }
+
         else:
             response = None
+        
         return response
+    
     except Exception as e:
         print(e)
 
 
-def get_user(data):  # for login
+def login_user(data):  # for login
+
     email_id = data["email_id"]
-    password = data["password"].emncode()
+    password = data["password"]
 
     try:
-        sql = """SELECT email_id,password FROM Users WHERE email_id=(%s) AND password=(%s);"""
-        cursor.execute(sql,(email_id,password,))
+        sql = """SELECT email_id,password FROM Users WHERE email_id=(%s);"""
+        
+        cursor.execute(sql,(email_id,))
         user = cursor.fetchone()
-
+        connection.commit()
+        
         if user is None:
             response = {
                 "msg": "user not fund"
             }
         else:
-            cookie = email_id.encode()
-            sql = """INSERT INTO Cookie(email_id,cookie) VALUE(%s,%s);"""
-            
-            cursor.execute(sql,(email_id,cookie,))
-            connection.commit()
-            
-            response = {
-                "msg": "user found",
-                "cookie": cookie
-            }
+            if bcrypt.checkpw(password.encode(),user[1].encode()):
+                # print("true")
+                payload = {
+                    'exp': datetime.datetime.utcnow() + datetime.timedelta(days=1, seconds=0),
+                    'email': email_id
+                }
+                cookie =  jwt.encode(
+                    payload,
+                    os.getenv("SECRET_KEY")
+                )
+                response = {
+                    "msg": "user found",
+                    "cookie": cookie
+                }
+            else:
+                # print("false")
+                response = {
+                    "msg": "password is wrong"
+                }
 
         return response
 
     except Exception as e:
         print(e)
-
-
-def delete_cookie(data):
-    sql = """SELECT cookie FROM Cookies WHERE cookie=(%s);"""
-    try:
-        cursor.execute(sql,(data,))
-        cookie = cursor.fetchone()
-
-        if cookie is None:
-            response = {
-                "msg": "cookie not found"
-            }
-        else:
-            sql = """DELETE FROM Cookies * WHERE cookie=(%s);"""
-            
-            cursor.execute(sql,(data,))
-            connection.commit()
-            
-            response = {
-                "msg": "ok"
-            }
-            return response
-    except Exception as e:
-        print(e)
-
-
